@@ -32,7 +32,7 @@
 			}
 
 			#startTime {
-				width: 90px;
+				width: 130px;
 			}
 
 			p {
@@ -150,7 +150,7 @@
 
 					var d = new Date();
 					$("#startTimeMilliseconds").val(d.getTime());
-					$("#startTime").val(pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2));
+					$("#startTime").val(formatTime(d));
 				});
 
 				$("#stopButton").click(function() {
@@ -229,15 +229,35 @@
 				}
 			}
 
+			function millisecondsToHours(milliseconds) {
+				return (milliseconds / 3600000).toFixed(2);
+			}
+
 			function pad(num, size) {
 				var numString = num+"";
 				while(numString.length < size) numString = "0" + numString;
 				return numString;
 			}
 
-			function millisecondsToHours(milliseconds) {
-				return (milliseconds / 3600000).toFixed(2);
+			function getTimePeriod(hour) {
+				if(hour > 12) return "PM";
+				return "AM";
 			}
+
+			function formatTime(date) {
+				var militaryHour = date.getHours();
+
+				if(militaryHour > 12) {
+					var standardHour = militaryHour - 12;
+				} else {
+					var standardHour = militaryHour;
+				}
+
+				var minutes = pad(date.getMinutes(), 2);
+
+				return pad(standardHour, 2) + ":" + minutes + " " + getTimePeriod(militaryHour);
+			}
+
 		</script>
 	</body>
 </html>
