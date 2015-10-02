@@ -19,7 +19,7 @@
 				text-align: center;
 			}
 
-			input, select {
+			input {
 				background: none;
 				border: 1px dashed #eaeaea;
 				border-radius: 5px;
@@ -33,11 +33,6 @@
 
 			#startTime {
 				width: 90px;
-			}
-
-			select option {
-				background: #333;
-				color: #fff;
 			}
 
 			p {
@@ -130,16 +125,7 @@
 			<div class="table-cell">
 				<span class="logo"><i class="fa fa-clock-o"></i><strong>Time</strong>Tracker</span>
 				<input type="hidden" id="startTimeMilliseconds" />
-				<p>
-					Since <input id="startTime" disabled> you have been working on
-					<select id="activity">
-						<option value="Platform">Platform</option>
-						<option value="Innovation and Process/Technical Debt">Innovation and Process/Technical Debt</option>
-						<option value="Operational Support">Operational Support</option>
-						<option value="Production Support">Production Support</option>
-						<option value="Training">Training</option>
-					</select>
-				</p>
+				<p>Since <input id="startTime" disabled> you have been working on <input id="activity" /></p>
 				<button id="startButton"><i class="fa fa-play"></i> Start</button>
 				<button id="stopButton" class="dangerBtn" disabled><i class="fa fa-stop"></i> Stop</button>
 				<button id="clearButton" class="warningBtn"><i class="fa fa-eraser"></i> Clear All</button>
@@ -148,16 +134,15 @@
 		</div>
 
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+		<!--<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>-->
 		<script type="text/javascript">
 			DisplayTotals();
 
 			if(typeof(Storage) !== "undefined") {
 
 				var timeSpan = { ElapsedTime: 0, Activity: "" };
-
-				var timeSheet = {
-					timeSpans: []
-				};
+				var timeSheet = { timeSpans: [] };
+				var activities = [];
 
 				$("#startButton").click(function() {
 					$(this).prop("disabled", true);
@@ -192,6 +177,19 @@
 						localStorage.timeSheet = stringTimeSheet;
 					}
 
+					if(localStorage.timeSheetActivities) {
+						var objectActivites = JSON.parse(localStorage.timeSheetActivities);
+						if(objectActivites.indexOf(timeSpan.Activity) === -1) {
+							objectActivites.push(timeSpan.Activity);
+						}
+						var stringActivites = JSON.stringify(objectActivites);
+						localStorage.timeSheetActivities = stringActivites;
+					} else {
+						activities.push(timeSpan.Activity);
+						var stringActivites = JSON.stringify(activities);
+						localStorage.timeSheetActivities = stringActivites;
+					}
+
 					DisplayTotals();
 				});
 
@@ -202,57 +200,32 @@
 					DisplayTotals();
 				});
 
+				//$("#activity").autocomplete({
+				//	source: JSON.parse(localStorage.activities)
+				//});
+
 			} else {
 				// Sorry! No Web Storage support..
 			}
 
 			function DisplayTotals() {
 				$("#timeTotals").html("");
-				if (localStorage.timeSheet) {
+				if (localStorage.timeSheet && localStorage.timeSheetActivities) {
 					var timeSheets = JSON.parse(localStorage.timeSheet);
-					var platformTotals = 0;
-					var InnovationTotals = 0;
-					var OperationalSupportTotals = 0;
-					var ProductionSupportTotals = 0;
-					var TrainingTotals = 0;
+					var activities = JSON.parse(localStorage.timeSheetActivities);
 
-					$.each(timeSheets.timeSpans, function() {
-						switch(this.Activity) {
-							case "Platform":
-								platformTotals = platformTotals + this.ElapsedTime;
-								break;
-							case "Innovation and Process/Technical Debt":
-								InnovationTotals = InnovationTotals + this.ElapsedTime;
-								break;
-							case "Operational Support":
-								OperationalSupportTotals = OperationalSupportTotals + this.ElapsedTime;
-								break;
-							case "Production Support":
-								ProductionSupportTotals = ProductionSupportTotals + this.ElapsedTime;
-								break;
-							case "Training":
-								TrainingTotals = TrainingTotals + this.ElapsedTime;
-								break;
-							default:
-								break;
+					$.each(activities, function() {
+						var activity = this;
+						var activityTotalTime = 0;
+						$.each(timeSheets.timeSpans, function() {
+							if(this.Activity == activity) {
+								activityTotalTime = activityTotalTime + this.ElapsedTime;
+							}
+						});
+						if(activityTotalTime > 0) {
+							$("#timeTotals").append("<li>" + activity + ":<span class='time'>" + millisecondsToHours(activityTotalTime) + " hours</span></li>");
 						}
 					});
-
-					if(platformTotals > 0) {
-						$("#timeTotals").append("<li>Platform:<span class='time'>" + millisecondsToHours(platformTotals) + " hours</span></li>");
-					}
-					if(InnovationTotals > 0) {
-						$("#timeTotals").append("<li>Innovation and Process/Technical Debt:<span class='time'>" + millisecondsToHours(InnovationTotals) + " hours</span></li>");
-					}
-					if(OperationalSupportTotals > 0) {
-						$("#timeTotals").append("<li>Operational Support:<span class='time'>" + millisecondsToHours(OperationalSupportTotals) + " hours</span></li>");
-					}
-					if(ProductionSupportTotals > 0) {
-						$("#timeTotals").append("<li>Production Support:<span class='time'>" + millisecondsToHours(ProductionSupportTotals) + " hours</span></li>");
-					}
-					if(TrainingTotals > 0) {
-						$("#timeTotals").append("<li>Training:<span class='time'>" + millisecondsToHours(TrainingTotals) + " hours</span></li>");
-					}
 				}
 			}
 
